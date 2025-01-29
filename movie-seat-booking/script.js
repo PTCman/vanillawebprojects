@@ -1,38 +1,62 @@
-/**
- * 1. 클릭하면 색깔이 바뀐다.
- * 2. selected 된 걸 계산한다.
- */
-const movieSelected = document.getElementById('movie');
-const countSpan = document.getElementById('count');
-const totalSpan = document.getElementById('total');
-let seatCount = 0;
-let moviePrice = parseInt(movieSelected.value);
-let totalPrice = 0;
+const seats = document.querySelectorAll('.row .seat:not(.occupied)');
+const container = document.querySelector('.container');
+const count = document.getElementById('count');
+const total = document.getElementById('total');
+const movieSelect = document.getElementById('movie');
+
+updateUI();
+
+let ticketPrice = parseInt(movieSelect.value);
 
 
-
-function updateUI(){
-  totalPrice = seatCount * moviePrice;
-  countSpan.innerText = seatCount;
-  totalSpan.innerText = totalPrice;
+function setMovieData(movieIndex, moviePrice){
+  localStorage.setItem('selectedMovieIndex', movieIndex);
+  localStorage.setItem('selectedMoviePrice', moviePrice);
 }
 
+function setData(){
+  const selectedSeats = document.querySelectorAll('.row .seat.selected');
+  const indexSeat = [...selectedSeats].map(seat => [...seats].indexOf(seat));
+  
+  localStorage.setItem('selectedSeats', JSON.stringify(indexSeat));
 
-document.querySelector('#movie').addEventListener('change', (e)=>{
-  moviePrice = parseInt(e.target.value);
+  const selectedSeatsCount = indexSeat.length;
 
-  updateUI()
+  count.innerText = selectedSeatsCount;
+  total.innerText = selectedSeatsCount * ticketPrice;
+
+  setMovieData(movieSelect.selectedIndex, movieSelect.value);
+}
+
+function updateUI(){
+  const selectedSeats = JSON.parse(localStorage.getItem('selectedSeats'));
+  
+  if(selectedSeats !== null && selectedSeats.length > 0){
+    seats.forEach((seat, index)=>{
+      console.log(selectedSeats.indexOf(index))
+      if(selectedSeats.indexOf(index) > -1){
+        seat.classList.add('selected');
+      }
+    });
+  }
+
+  const selectedMovieIndex = localStorage.getItem('selectedMovieIndex');
+  if(selectedMovieIndex !== null){
+    movieSelect.selectedIndex = selectedMovieIndex;
+  }
+}
+
+movieSelect.addEventListener('change', ()=>{
+  ticketPrice = parseInt(movieSelect.value);
+  setMovieData(movieSelect.selectedIndex, movieSelect.value);
+  setData();
 });
 
-document.querySelector('.container').addEventListener('click', (e)=>{
-  if(e.target.className === 'seat'){
-    e.target.className = 'seat selected';
-    seatCount += 1;
-    updateUI();
-
-  } else if(e.target.className === 'seat selected'){
-    e.target.className = 'seat';
-    seatCount -= 1;
-    updateUI();
+container.addEventListener('click', (e)=>{
+  if(e.target.classList.contains('seat') 
+    && !e.target.classList.contains('occupied')){
+      e.target.classList.toggle('selected');
+      setData();
   }
 });
+setData();
